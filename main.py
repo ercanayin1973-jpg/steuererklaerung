@@ -102,8 +102,8 @@ def create_pdf_report(ai_text, kanton, status, filename="Steuererklaerung_Offizi
         ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#334155')),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
         ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#000000')),
-        ('TOPPADDING', (0, 0), (-1, -1), 3),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+        ('TOPPADDING', (0, 0), (-1, -1), 3),
     ]))
     elements.append(Paragraph("<b>2. ABZÜGE (BERUF, SÄULE 3A, KRANKENKASSE, GESUNDHEIT, SPENDEN)</b>", meta_style))
     elements.append(Spacer(1, 2))
@@ -175,9 +175,9 @@ def process_tax_documents():
     Keine türkische Sprache verwenden, ausschliesslich formelles Schweizer Deutsch.
     """
     
-    # En stabil çalışan güncel Flash modeli
+    # Doğru ve desteklenen resmi model adı
     response = client.models.generate_content(
-        model='gemini-2.0-flash',
+        model='gemini-2.5-flash',
         contents=prompt,
     )
     return response.text, secilen_kanton, medeni_durum
