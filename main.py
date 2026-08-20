@@ -1,47 +1,57 @@
-import csv
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
 import smtplib
 from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
 import os
 
-def send_email():
-    # 1. Zürih 2025 Detaylı Veri Hazırlığı
+def create_pdf():
+    file_path = "Steuererklaerung_2025_Zuerich.pdf"
+    c = canvas.Canvas(file_path, pagesize=A4)
+    
+    # Başlık
+    c.setFont("Helvetica-Bold", 16)
+    c.drawString(50, 800, "STEUERERKLÄRUNG 2025 - KANTON ZÜRICH")
+    
+    # Veri Listesi
+    c.setFont("Helvetica", 10)
     data = [
-        ["Ziffer", "Beschreibung", "Betrag (CHF)"],
-        ["11.1", "Bruttolohn Person 1", 125000],
-        ["11.2", "Bruttolohn Person 2", 45000],
-        ["17", "Sonderabzug Erwerbstätigkeit (Beide)", 6100],
-        ["21", "Berufsauslagen (Total)", -6400],
-        ["22.1", "Säule 3a (Max. Total)", -14516],
-        ["22.2", "Krankenkassen-Sozialabzug", -5800],
-        ["16.6", "Kita-Abzug (Fremdbetreuung)", -12000],
-        ["30.1", "Bankkonten (ZKB)", 45000],
-        ["35", "Schulden (Privatkredit)", -5000]
+        ("Ziffer", "Beschreibung", "Betrag (CHF)"),
+        ("11.1", "Bruttolohn Person 1", "125'000"),
+        ("11.2", "Bruttolohn Person 2", "45'000"),
+        ("17", "Sonderabzug Erwerbstätigkeit", "6'100"),
+        ("21", "Berufsauslagen", "-6'400"),
+        ("22.1", "Säule 3a", "-14'516"),
+        ("16.6", "Kita-Abzug", "-12'000"),
+        ("30.1", "Bankguthaben", "45'000"),
+        ("35", "Schulden", "-5'000")
     ]
     
-    file_name = "Steuererklaerung_Zuerich_2025_Final.csv"
-    with open(file_name, "w", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
-        writer.writerows(data)
+    y = 750
+    for row in data:
+        c.drawString(50, y, row[0])
+        c.drawString(150, y, row[1])
+        c.drawString(400, y, row[2])
+        y -= 25
+        
+    c.save()
+    return file_path
 
-    # 2. Maili Hazırla
+def send_email():
+    file_path = create_pdf()
     msg = MIMEMultipart()
     msg['From'] = os.environ.get("MY_EMAIL")
     msg['To'] = os.environ.get("MY_EMAIL")
-    msg['Subject'] = "OFFIZIELLE STEUERERKLÄRUNG 2025 - ZÜRICH"
-    msg.attach(MIMEText("Ekli dosya, Zürih Kantonu 2025 resmî standartlarına göre hazırlanan detaylı vergi beyannamesi verileridir.", 'plain', 'utf-8'))
-
-    # 3. Dosyayı Ekle
-    with open(file_name, "rb") as f:
-        part = MIMEBase("application", "octet-stream")
+    msg['Subject'] = "OFFIZIELLE STEUERERKLÄRUNG 2025"
+    
+    with open(file_path, "rb") as f:
+        part = MIMEBase("application", "pdf")
         part.set_payload(f.read())
         encoders.encode_base64(part)
-        part.add_header("Content-Disposition", "attachment", filename=file_name)
+        part.add_header("Content-Disposition", "attachment", filename="Steuererklaerung_2025.pdf")
         msg.attach(part)
 
-    # 4. Gönder
     server = smtplib.SMTP('smtp.gmail.com', 587)
     server.starttls()
     server.login(os.environ.get("MY_EMAIL"), os.environ.get("EMAIL_PASSWORD"))
