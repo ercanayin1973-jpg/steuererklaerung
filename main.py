@@ -26,7 +26,6 @@ def create_pdf_report(report_text, filename="tax_report.pdf"):
     return filename
 
 def process_tax_documents():
-    # Evli çiftlerin ortak harcama simülasyonu
     raw_expenses = """
     - Eş 1 (Ahmet): Berufsauslagen (Yol/Tren) - 1'500 CHF
     - Eş 2 (Ayşe): Weiterbildung (Mesleki Kurs) - 1'200 CHF
@@ -46,7 +45,7 @@ def process_tax_documents():
     """
     
     response = client.models.generate_content(
-        model='gemini-2.5-flash',
+        model='gemini-3.7-flash',
         contents=prompt,
     )
     return response.text
