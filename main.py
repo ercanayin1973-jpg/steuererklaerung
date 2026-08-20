@@ -11,15 +11,31 @@ import os
 
 def create_dynamic_tax_pdf():
     # BURADAN KANTONU DEĞİŞTİREBİLİRSİN: "Zuerich", "Aargau", "Basel"
-    kanton = "Zuerich" # Örn: "Aargau" veya "Basel" yapabilirsin
+    kanton = "Aargau"  # Seçenekler: "Zuerich", "Aargau", "Basel"
     
-    kanton_bilgileri = {
-        "Zuerich": {"ad": "Kanton Zürich", "portal": "ZHprivateTax"},
-        "Aargau": {"ad": "Kanton Aargau", "portal": "Steuerportal AG"},
-        "Basel": {"ad": "Kanton Basel-Stadt", "portal": "TaxMe BS"}
+    # Kanton bazlı özel oranlar, portallar ve indirim limitleri
+    kanton_verileri = {
+        "Zuerich": {
+            "ad": "Kanton Zürich", 
+            "portal": "ZHprivateTax",
+            "kinderabzug": "9'300",
+            "steuerfuss_info": "Kantonales Form 300 / 2025"
+        },
+        "Aargau": {
+            "ad": "Kanton Aargau", 
+            "portal": "Steuerportal AG",
+            "kinderabzug": "8'500", # Aargau kantonu için örnek güncel limit
+            "steuerfuss_info": "Steuererklärung AG / 2025"
+        },
+        "Basel": {
+            "ad": "Kanton Basel-Stadt", 
+            "portal": "TaxMe BS",
+            "kinderabzug": "9'000", # Basel-Stadt kantonu için örnek güncel limit
+            "steuerfuss_info": "Steuererklärung BS / 2025"
+        }
     }
     
-    kanton_info = kanton_bilgileri.get(kanton, kanton_bilgileri["Zuerich"])
+    info = kanton_verileri.get(kanton, kanton_verileri["Zuerich"])
     file_path = f"Steuererklaerung_2025_{kanton}.pdf"
     
     doc = SimpleDocTemplate(file_path, pagesize=A4, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
@@ -50,13 +66,13 @@ def create_dynamic_tax_pdf():
         fontName="Helvetica-Bold"
     )
 
-    # --- SAYFA 1: TABLO FORMATINDA FORM 300 ---
-    story.append(Paragraph(f"STEUERERKLÄRUNG 2025 - {kanton_info['ad'].upper()}", title_style))
-    story.append(Paragraph(f"Offizielle Deklaration (Portal: {kanton_info['portal']})", styles['Normal']))
+    # --- SAYFA 1: TABLO FORMATINDA VERGİ ÖZETİ ---
+    story.append(Paragraph(f"STEUERERKLÄRUNG 2025 - {info['ad'].upper()}", title_style))
+    story.append(Paragraph(f"Offizielle Deklaration | Portal: {info['portal']} | {info['steuerfuss_info']}", styles['Normal']))
     story.append(Spacer(1, 10))
     
     raw_data = [
-        ["Ziff.", "Beschreibung (Form 300)", "CHF"],
+        ["Ziff.", "Beschreibung", "CHF"],
         ["1.1", "Haupterwerb Person 1 & 2 (Lohnausweis)", "170'000"],
         ["4.1", "Wertschriftenertrag (Zinsen / Dividenden)", "450"],
         ["7", "Total der Einkünfte", "170'450"],
@@ -73,9 +89,9 @@ def create_dynamic_tax_pdf():
         ["22.1", "Krankheits- und Unfallkosten", "-1'200"],
         ["22.2", "Gemeinnützige Zuwendungen (Spenden)", "-500"],
         ["23", "Reineinkommen", "123'134"],
-        ["24.1", "Kinderabzug (Kantonale Regelung)", "9'300"],
+        ["24.1", f"Kinderabzug Noah (Kanton: {info['kinderabzug']} / Bund: 6'800)", f"{info['kinderabzug']} / 6'800"],
         ["24.3", "Ehegattenabzug (Direkte Bundessteuer)", "2'800"],
-        ["25", "STEUERBARES EINKOMMEN (Kanton)", "113'834"],
+        ["25", f"STEUERBARES EINKOMMEN ({kanton})", "113'834"],
         ["25", "STEUERBARES EINKOMMEN (Bund)", "113'534"],
         ["33", "Total der Vermögenswerte", "57'500"],
         ["34", "Schulden (Privatkredit)", "-5'000"],
@@ -83,14 +99,12 @@ def create_dynamic_tax_pdf():
     ]
     
     table_data = []
-    # Header formatlama
     table_data.append([
         Paragraph(raw_data[0][0], header_style),
         Paragraph(raw_data[0][1], header_style),
         Paragraph(raw_data[0][2], header_style)
     ])
     
-    # Satırları formatlama
     for row in raw_data[1:]:
         table_data.append([
             Paragraph(row[0], cell_style),
@@ -111,8 +125,8 @@ def create_dynamic_tax_pdf():
     story.append(t)
     story.append(PageBreak())
     
-    # --- SAYFA 2: EK FORMLAR VE AÇIKLAMALAR ---
-    story.append(Paragraph(f"BEILAGEN & HINWEISE ({kanton_info['ad'].upper()})", title_style))
+    # --- SAYFA 2: EK FORMLAR VE KANTONAL BİLGİLER ---
+    story.append(Paragraph(f"BEILAGEN & KANTONALE HINWEISE ({info['ad'].upper()})", title_style))
     story.append(Spacer(1, 10))
     
     story.append(Paragraph("<b>1. Wertschriften- und Guthabenverzeichnis</b>", styles['Heading3']))
@@ -125,9 +139,9 @@ def create_dynamic_tax_pdf():
     story.append(Paragraph("• Abzugsfähige Schuldzinsen: 150 CHF -> Ziff. 12", styles['Normal']))
     story.append(Spacer(1, 10))
     
-    story.append(Paragraph(f"<b>3. Kantonale Einreichung ({kanton})</b>", styles['Heading3']))
-    story.append(Paragraph(f"• Die Deklaration erfolgt über das offizielle Portal: {kanton_info['portal']}.", styles['Normal']))
-    story.append(Paragraph("• Alle Belege (Lohnausweis, Krankenkasse, Kita) digital bereithalten.", styles['Normal']))
+    story.append(Paragraph(f"<b>3. Spezifische Bestimmungen für {info['ad']}</b>", styles['Heading3']))
+    story.append(Paragraph(f"• Die offizielle Einreichung erfolgt über das Online-Portal: {info['portal']}.", styles['Normal']))
+    story.append(Paragraph(f"• Kantonales Kinderabzugslimit wurde mit {info['kinderabzug']} CHF angerechnet.", styles['Normal']))
 
     doc.build(story)
     return file_path, kanton
@@ -139,7 +153,7 @@ def send_email():
     msg['From'] = os.environ.get("MY_EMAIL")
     msg['To'] = os.environ.get("MY_EMAIL")
     msg['Subject'] = f"OFFIZIELLE STEUERERKLÄRUNG 2025 - {secilen_kanton.upper()}"
-    msg.attach(MIMEText(f"Seçilen kanton ({secilen_kanton}) için hazırlanan çizgili tablo formatındaki vergi taslağı ektedir.", 'plain', 'utf-8'))
+    msg.attach(MIMEText(f"Seçilen kanton ({secilen_kanton}) kurallarına göre hazırlanan çizgili tablo formatındaki vergi taslağı ektedir.", 'plain', 'utf-8'))
     
     with open(file_path, "rb") as f:
         part = MIMEBase("application", "pdf")
