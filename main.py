@@ -45,7 +45,8 @@ def create_pdf_report(report_text, filename="tax_report.pdf"):
     return filename
 
 def process_tax_documents():
-    medeni_durum = "Verheiratet"  # "Verheiratet" (Evli) veya "Ledig" (Bekar)
+    # Buradan müşterinin durumunu "Verheiratet" (Evli) veya "Ledig" (Bekar) yapabilirsin
+    medeni_durum = "Verheiratet"  
     
     raw_expenses = """
     - Yol/Ulasim Masrafi (Berufsauslagen): 1'500 CHF
@@ -70,9 +71,9 @@ def process_tax_documents():
     {raw_expenses}
     """
     
-    # En stabil ve garantili Developer API model adı
+    # Güncel ve resmi model adı
     response = client.models.generate_content(
-        model='gemini-1.5-flash',
+        model='gemini-2.5-flash',
         contents=prompt,
     )
     return response.text, medeni_durum
