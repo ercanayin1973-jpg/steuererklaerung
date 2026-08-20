@@ -70,9 +70,8 @@ def process_tax_documents():
     {raw_expenses}
     """
     
-    # En kararlı ve her zaman yanıt veren model adı
     response = client.models.generate_content(
-        model='gemini-1.5-flash',
+        model='gemini-2.0-flash',
         contents=prompt,
     )
     return response.text, medeni_durum
