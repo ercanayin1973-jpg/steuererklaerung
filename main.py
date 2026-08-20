@@ -71,9 +71,9 @@ def process_tax_documents():
     {raw_expenses}
     """
     
-    # Güncel ve resmi model adı
+    # En güncel ve resmi Flash model adı
     response = client.models.generate_content(
-        model='gemini-2.5-flash',
+        model='gemini-3.7-flash',
         contents=prompt,
     )
     return response.text, medeni_durum
