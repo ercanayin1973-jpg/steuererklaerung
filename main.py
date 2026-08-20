@@ -9,17 +9,15 @@ import os
 def create_official_pdf():
     file_path = "Steuererklaerung_2025_Zuerich_Final.pdf"
     c = canvas.Canvas(file_path, pagesize=A4)
-    c.setFont("Helvetica-Bold", 12)
+    c.setFont("Helvetica-Bold", 14)
     c.drawString(50, 820, "STEUERERKLÄRUNG 2025 - KANTON ZÜRICH (FORM 300)")
     
-    # Hesaplama Mantığı (Ziffer Zinciri)
-    # Gelirler
+    # 2025 Resmi Ziffer Hesaplama Zinciri
     z7_total_einkunfte = 170450
-    # İndirimler
     z18_total_abzuge = 44816
     z21_netto = z7_total_einkunfte - z18_total_abzuge
-    z23_rein = z21_netto - 1700 # Krankheits + Spenden
-    z25_steuerbar_eink = z23_rein - 9300 - 2800 # Çocuk + Eş indirimi
+    z23_rein = z21_netto - 1700 
+    z25_steuerbar_eink = z23_rein - 9300 - 2800 
     
     data = [
         ("Ziff.", "Beschreibung", "CHF"),
@@ -48,13 +46,13 @@ def create_official_pdf():
     c.save()
     return file_path
 
-# send_email fonksiyonu aynı kalıyor...
 def send_email():
     file_path = create_official_pdf()
     msg = MIMEMultipart()
     msg['From'] = os.environ.get("MY_EMAIL")
     msg['To'] = os.environ.get("MY_EMAIL")
     msg['Subject'] = "OFFIZIELLE STEUERERKLÄRUNG 2025"
+    msg.attach(MIMEText("Resmi Zürih 2025 standartlarına uygun vergi beyannamesi ektedir.", 'plain', 'utf-8'))
     
     with open(file_path, "rb") as f:
         part = MIMEBase("application", "pdf")
@@ -62,7 +60,7 @@ def send_email():
         encoders.encode_base64(part)
         part.add_header("Content-Disposition", "attachment", filename="Steuererklaerung_2025.pdf")
         msg.attach(part)
-    
+
     server = smtplib.SMTP('smtp.gmail.com', 587)
     server.starttls()
     server.login(os.environ.get("MY_EMAIL"), os.environ.get("EMAIL_PASSWORD"))
