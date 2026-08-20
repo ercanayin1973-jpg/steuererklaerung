@@ -4,13 +4,11 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from google import genai
 
-# 1. Bilgileri alıyoruz
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 MY_EMAIL = os.environ.get("MY_EMAIL")
 EMAIL_PASSWORD = os.environ.get("EMAIL_PASSWORD")
 
 def process_tax_documents():
-    # Müşterinin yıl boyunca topladığı dağınık harcamalar
     raw_expenses = """
     - 15.03.2026: Zürih Tren İstasyonu yıllık abonelik (Berufsauslagen / Yol) - 1'200 CHF
     - 10.05.2026: Dişçi kontrol ve tedavi faturası (Krankheitskosten) - 450 CHF
@@ -18,7 +16,7 @@ def process_tax_documents():
     - 12.11.2026: Mesleki Almanca kursu faturası (Weiterbildung) - 800 CHF
     """
     
-    # Gemini'yi yeni kütüphane standardına göre başlatıyoruz
+    # Doğrudan API anahtarı ile istemciyi başlatıyoruz
     client = genai.Client(api_key=GEMINI_API_KEY)
     
     prompt = f"""
@@ -31,6 +29,7 @@ def process_tax_documents():
     {raw_expenses}
     """
     
+    # Standart Developer API model adı
     response = client.models.generate_content(
         model='gemini-2.5-flash',
         contents=prompt,
