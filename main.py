@@ -175,8 +175,9 @@ def process_tax_documents():
     Keine türkische Sprache verwenden, ausschliesslich formelles Schweizer Deutsch.
     """
     
+    # En stabil çalışan güncel Flash modeli
     response = client.models.generate_content(
-        model='gemini-3.5-flash',
+        model='gemini-2.0-flash',
         contents=prompt,
     )
     return response.text, secilen_kanton, medeni_durum
