@@ -2,6 +2,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 import smtplib
 from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
 import os
@@ -16,8 +17,8 @@ def create_official_pdf():
     z7_total_einkunfte = 170450
     z18_total_abzuge = 44816
     z21_netto = z7_total_einkunfte - z18_total_abzuge
-    z23_rein = z21_netto - 1700 
-    z25_steuerbar_eink = z23_rein - 9300 - 2800 
+    z23_rein = z21_netto - 1700
+    z25_steuerbar_eink = z23_rein - 9300 - 2800
     
     data = [
         ("Ziff.", "Beschreibung", "CHF"),
