@@ -6,54 +6,49 @@ from email.mime.base import MIMEBase
 from email import encoders
 import os
 
-def create_full_pdf():
-    file_path = "Steuererklaerung_2025_Offiziell.pdf"
+def create_official_pdf():
+    file_path = "Steuererklaerung_2025_Zuerich_Offiziell.pdf"
     c = canvas.Canvas(file_path, pagesize=A4)
-    
-    # Başlık ve Kişisel Bilgiler
     c.setFont("Helvetica-Bold", 14)
     c.drawString(50, 820, "STEUERERKLÄRUNG 2025 - KANTON ZÜRICH")
-    c.setFont("Helvetica", 10)
-    c.drawString(50, 800, "Person 1: Max Muster | Person 2: Erika Muster | Kinder: Noah Muster (10.02.2018)")
     
-    # Tablo Başlıkları
-    c.setFont("Helvetica-Bold", 10)
-    c.drawString(50, 770, "Ziffer")
-    c.drawString(120, 770, "Beschreibung")
-    c.drawString(450, 770, "Betrag (CHF)")
-    
-    # Detaylı Veriler (Senin istediğin 18 madde buraya sığıyor)
-    c.setFont("Helvetica", 10)
+    # Resmi Ziffer Yapısı
     data = [
-        ("11.1", "Bruttolohn Person 1", "125'000"),
-        ("11.2", "Bruttolohn Person 2", "45'000"),
+        ("Ziffer", "Beschreibung", "Betrag (CHF)"),
+        ("1.1", "Haupterwerb Person 1", "125'000"),
+        ("1.1", "Haupterwerb Person 2", "45'000"),
+        ("11.1", "Berufsauslagen Person 1", "-3'200"),
+        ("11.2", "Berufsauslagen Person 2", "-3'200"),
+        ("14.1", "Säule 3a Person 1", "-7'258"),
+        ("14.2", "Säule 3a Person 2", "-7'258"),
+        ("15", "Versicherungsprämien (Krankenkasse)", "-5'800"),
+        ("16.6", "Fremdbetreuung Kinder (Kita)", "-12'000"),
         ("17", "Sonderabzug Erwerbstätigkeit", "6'100"),
-        ("21", "Berufsauslagen Total", "-6'400"),
-        ("22.1", "Säule 3a (P1+P2)", "-14'516"),
-        ("22.2", "Krankenkassen-Sozialabzug", "-5'800"),
-        ("16.6", "Kita-Abzug (Fremdbetreuung)", "-12'000"),
-        ("7", "Kinder-Sozialabzug (Noah)", "-9'300"),
-        ("30.1", "Bankguthaben (ZKB)", "45'000"),
-        ("35", "Schulden (Privatkredit)", "-5'000"),
-        ("Total", "STEUERBARES EINKOMMEN", "125'484")
+        ("22.1", "Krankheits- und Unfallkosten", "-1'200"),
+        ("22.2", "Gemeinnützige Zuwendungen", "-500"),
+        ("24.1", "Kinderabzug (Staatssteuer)", "-9'300"),
+        ("30.1", "Bankguthaben & Wertschriften", "57'500"),
+        ("34", "Schulden (Privatkredit)", "-5'000"),
+        ("35", "STEUERBARES VERMÖGEN GESAMT", "52'500")
     ]
     
-    y = 740
-    for z, d, b in data:
-        c.drawString(50, y, z)
-        c.drawString(120, y, d)
-        c.drawString(450, y, b)
+    y = 770
+    c.setFont("Helvetica-Bold", 10)
+    c.drawString(50, y, data[0][0]); c.drawString(150, y, data[0][1]); c.drawString(450, y, data[0][2])
+    y -= 30
+    c.setFont("Helvetica", 10)
+    for row in data[1:]:
+        c.drawString(50, y, row[0]); c.drawString(150, y, row[1]); c.drawString(450, y, row[2])
         y -= 20
-        
     c.save()
     return file_path
 
 def send_email():
-    file_path = create_full_pdf()
+    file_path = create_official_pdf()
     msg = MIMEMultipart()
     msg['From'] = os.environ.get("MY_EMAIL")
     msg['To'] = os.environ.get("MY_EMAIL")
-    msg['Subject'] = "OFFIZIELLE STEUERERKLÄRUNG 2025 - DETAILLIERT"
+    msg['Subject'] = "OFFIZIELLE STEUERERKLÄRUNG 2025"
     
     with open(file_path, "rb") as f:
         part = MIMEBase("application", "pdf")
