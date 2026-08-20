@@ -1,48 +1,44 @@
-import pandas as pd
-import openpyxl
-from openpyxl.styles import Font, Alignment, PatternFill
-from openpyxl.utils import get_column_letter
+import csv
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email import encoders
+import os
 
-# İsviçre/Zürih 2025 Kurallarına Göre Profesyonel Veri Yapısı
-data = {
-    "Ziffer": ["11.1", "11.2", "17", "21", "22.1", "22.2", "30.1", "35", "16.6"],
-    "Beschreibung": [
-        "Bruttolohn P1 (Lohnausweis)", "Bruttolohn P2 (Lohnausweis)", 
-        "Sonderabzug Erwerbstätigkeit (Beide)", "Berufsauslagen (P1+P2)", 
-        "Säule 3a (Max 7'258 x 2)", "Krankenkassen-Sozialabzug", 
-        "Bankkonten (ZKB)", "Schuldenverzeichnis (Privatkredit)", "Kita-Abzug (Fremdbetreuung)"
-    ],
-    "Betrag (CHF)": [125000, 45000, 6100, -6400, -14516, -5800, 45000, -5000, -12000]
-}
+def send_email():
+    try:
+        print("DEBUG: Süreç başlıyor...")
+        
+        # 1. Veri oluştur
+        data = [["Ziffer", "Beschreibung", "Betrag"], ["Test", "Test", 0]]
+        with open("test.csv", "w", newline="") as f:
+            csv.writer(f).writerows(data)
+        print("DEBUG: CSV dosyası oluşturuldu.")
 
-df = pd.DataFrame(data)
+        # 2. Mail hazırla
+        msg = MIMEMultipart()
+        msg['From'] = os.environ.get("MY_EMAIL")
+        msg['To'] = os.environ.get("MY_EMAIL")
+        msg['Subject'] = "DEBUG TEST MAIL"
+        msg.attach(MIMEText("Bu bir test mailidir.", 'plain'))
 
-# Excel Dosyası Oluştur
-wb = openpyxl.Workbook()
-ws = wb.active
-ws.title = "Steuererklaerung_Zuerich_2025"
+        # 3. SMTP Bağlantısı
+        print("DEBUG: SMTP sunucusuna bağlanılıyor...")
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()
+        print("DEBUG: TLS başlatıldı. Giriş deneniyor...")
+        
+        server.login(os.environ.get("MY_EMAIL"), os.environ.get("EMAIL_PASSWORD"))
+        print("DEBUG: Giriş başarılı!")
+        
+        server.sendmail(msg['From'], msg['To'], msg.as_string())
+        print("DEBUG: Mail gönderildi!")
+        server.quit()
+        print("DEBUG: İşlem başarıyla tamamlandı.")
 
-# Header ve Styling
-header = ["Ziffer", "Beschreibung", "Betrag (CHF)"]
-for col_num, title in enumerate(header, 1):
-    cell = ws.cell(row=1, column=col_num)
-    cell.value = title
-    cell.font = Font(bold=True, color="FFFFFF")
-    cell.fill = PatternFill(start_color="1E293B", end_color="1E293B", fill_type="solid")
-    ws.column_dimensions[get_column_letter(col_num)].width = 30
+    except Exception as e:
+        print(f"DEBUG KRİTİK HATA: {e}")
 
-# Verileri Yaz
-for r_idx, row in enumerate(df.values, 2):
-    for c_idx, value in enumerate(row, 1):
-        ws.cell(row=r_idx, column=c_idx).value = value
-
-# Hesaplama - Steuerbares Einkommen
-total_inc = df[df['Ziffer'].isin(['11.1', '11.2'])]['Betrag (CHF)'].sum()
-total_ded = df[df['Ziffer'].isin(['21', '22.1', '22.2', '16.6'])]['Betrag (CHF)'].sum()
-steuerbar = total_inc + total_ded
-
-ws.cell(row=10, column=2).value = "Steuerbares Einkommen (Rechnung):"
-ws.cell(row=10, column=3).value = steuerbar
-ws.cell(row=10, column=3).font = Font(bold=True, color="B91C1C")
-
-wb.save("Steuererklaerung_Zuerich_2025_Detail.xlsx")
+if __name__ == "__main__":
+    send_email()
