@@ -14,36 +14,30 @@ MY_EMAIL = os.environ.get("MY_EMAIL")
 EMAIL_PASSWORD = os.environ.get("EMAIL_PASSWORD")
 
 def create_pdf_report(report_text, filename="tax_report.pdf"):
-    # Profesyonel PDF şablonu (Türkçe karakter uyumlu Paragraph yapısı)
     doc = SimpleDocTemplate(filename, pagesize=A4, rightMargin=40, leftMargin=40, topMargin=40, bottomMargin=40)
     elements = []
     styles = getSampleStyleSheet()
     
-    # Başlık stili
     title_style = ParagraphStyle(
         'TitleStyle',
         parent=styles['Heading1'],
-        fontSize=16,
-        spaceAfter=15,
-        textColor=colors_HexColor = '#1A365D'
+        fontSize=15,
+        spaceAfter=12
     )
     
-    # Normal metin stili
     body_style = ParagraphStyle(
         'BodyStyle',
         parent=styles['Normal'],
         fontSize=10,
         leading=14,
-        spaceAfter=8
+        spaceAfter=6
     )
 
-    elements.append(Paragraph("Isvicre Vergi Beyannamesi Raporu", title_style))
+    elements.append(Paragraph("Isvicre Vergi Beyannamesi Otomatik Raporu", title_style))
     elements.append(Spacer(1, 10))
 
-    # Metni satır satır güvenli paragraflara bölüyoruz
     for line in report_text.split('\n'):
         if line.strip():
-            # Bozuk karakter ihtimaline karşı temizleme
             clean_line = line.replace('|', '-').replace('**', '')
             elements.append(Paragraph(clean_line, body_style))
 
@@ -51,19 +45,28 @@ def create_pdf_report(report_text, filename="tax_report.pdf"):
     return filename
 
 def process_tax_documents():
+    # Buradan müşterinin durumunu "Verheiratet" (Evli) veya "Ledig" (Bekar) olarak değiştirebilirsin
+    medeni_durum = "Verheiratet"  
+    
     raw_expenses = """
-    - Es 1 (Ahmet): Berufsauslagen (Yol/Tren) - 1'500 CHF
-    - Es 2 (Ayse): Weiterbildung (Mesleki Kurs) - 1'200 CHF
-    - Ortak: Krankheitskosten (Saglik masraflari) - 800 CHF
-    - Ortak: Spenden (Bagislar) - 250 CHF
+    - Yol/Ulasim Masrafi (Berufsauslagen): 1'500 CHF
+    - Saglik Masraflari (Krankheitskosten): 800 CHF
+    - Bagislar (Spenden): 250 CHF
     """
     
     client = genai.Client(api_key=GEMINI_API_KEY)
     
+    # Koşullu (OR) Mantık
+    if medeni_durum == "Verheiratet":
+        tarif_aciklamasi = "Musteri EVLI bir cifttir. Isvicre evli ciftler ortak vergi tarifesine (Verheiratetentarif) gore hesapla."
+    else:
+        tarif_aciklamasi = "Musteri BEKARDIR (Ledig). Isvicre bekar vergi tarifesine (Alleinstehenden-Tarif) gore hesapla."
+
     prompt = f"""
     Sen Isvicre vergi mevzuatina hakim uzman bir vergi asistanisin.
-    Musterimiz evli bir cifttir. Isvicre'nin evli ciftler icin gecerli ortak vergi tarifesine gore asagidaki harcamalari kategorize et.
-    Raporu hazirlarken Turkce karakter kullaniminda sikinti cikarmayacak duz metin ve liste formatinda yaz (ozel simgeler kullanma).
+    Durum: {tarif_aciklamasi}
+    Asagidaki harcamalari Isvicre vergi standartlarina gore kategorize et ve duzenli bir ozet rapor hazirla.
+    Turkce karakter sorununa yol acmayacak duz metin formatinda yaz.
 
     Harcama Listesi:
     {raw_expenses}
@@ -73,22 +76,23 @@ def process_tax_documents():
         model='gemini-3.7-flash',
         contents=prompt,
     )
-    return response.text
+    return response.text, medeni_durum
 
-def send_email_with_pdf(report_text):
+def send_email_with_pdf():
+    report_text, durum = process_tax_documents()
     pdf_path = create_pdf_report(report_text)
     
     msg = MIMEMultipart()
     msg['From'] = MY_EMAIL
     msg['To'] = MY_EMAIL
-    msg['Subject'] = "🧾 Isvicre Ortak Vergi Beyannamesi (Evli Ciftler)"
-    msg.attach(MIMEText("Ekli dosyada evli ciftler icin hazirlanan vergi taslagini bulabilirsiniz.", 'plain', 'utf-8'))
+    msg['Subject'] = f"🧾 Isvicre Vergi Raporu ({durum})"
+    msg.attach(MIMEText(f"Musterinin medeni durumuna ({durum}) gore hazirlanan vergi taslagi ektedir.", 'plain', 'utf-8'))
 
     with open(pdf_path, "rb") as f:
         part = MIMEBase("application", "octet-stream")
         part.set_payload(f.read())
         encoders.encode_base64(part)
-        part.add_header("Content-Disposition", f"attachment; filename=Vergi_Raporu.pdf")
+        part.add_header("Content-Disposition", f"attachment; filename=Vergi_Raporu_{durum}.pdf")
         msg.attach(part)
 
     try:
@@ -97,10 +101,9 @@ def send_email_with_pdf(report_text):
         server.login(MY_EMAIL, EMAIL_PASSWORD)
         server.sendmail(MY_EMAIL, MY_EMAIL, msg.as_string())
         server.quit()
-        print("PDF raporu basariyla gonderildi!")
+        print("Ortak vergi raporu basariyla gonderildi!")
     except Exception as e:
         print(f"Hata: {e}")
 
 if __name__ == "__main__":
-    report = process_tax_documents()
-    send_email_with_pdf(report)
+    send_email_with_pdf()
