@@ -8,84 +8,65 @@ from email.mime.text import MIMEText
 import os
 
 def create_complete_steuererklaerung():
-    file_path = "Steuererklaerung_2025_Form300_Resmi.pdf"
+    file_path = "Steuererklaerung_2025_Form300_Eksiksiz.pdf"
     c = canvas.Canvas(file_path, pagesize=A4)
     
-    # --- SAYFA 1: FORM 300 (Ana Vergi Özeti ve Ziffer Zinciri) ---
-    c.setFont("Helvetica-Bold", 13)
-    c.drawString(50, 800, "STEUERERKLÄRUNG 2025 - KANTON ZÜRICH (FORM 300)")
-    
-    einkunfte = 170450  # Ziff. 7
-    abzuge = {
-        "11.1/2": 6400,   # Berufsauslagen P1+P2
-        "12": 150,        # Schuldzinsen (Privatkredit)
-        "14.1/2": 14516,  # Säule 3a P1+P2
-        "15": 5800,       # Versicherungsprämien
-        "16.2": 500,      # Weiterbildung
-        "16.3": 150,      # Wertschriftenverwaltung
-        "16.6": 12000,    # Fremdbetreuung Kinder (Kita)
-        "17": 6100        # Sonderabzug Erwerbstätigkeit
-    }
-    z18_total = sum(abzuge.values()) # 45'616 CHF
-    z21_netto = einkunfte - z18_total # 124'834 CHF
-    
-    z22_1 = 1200 # Krankheitskosten
-    z22_2 = 500  # Spenden
-    z23_rein = z21_netto - (z22_1 + z22_2) # 123'134 CHF
-    
-    # Ziff. 25 Ayrımı (Kanton vs. Bund)
-    z25_kanton = z23_rein - 9300        # Kanton Zürich (Sadece Kinderabzug 9'300) -> 113'834 CHF
-    z25_bund = z23_rein - 6800 - 2800   # Bundessteuer (Kinderabzug 6'800 + Ehegattenabzug 2'800) -> 113'534 CHF
+    # --- SAYFA 1: FORM 300 (Tüm Detaylarıyla Eksiksiz Ziffer Zinciri) ---
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(50, 810, "STEUERERKLÄRUNG 2025 - KANTON ZÜRICH (FORM 300)")
     
     main_data = [
         ("Ziff.", "Beschreibung (Form 300)", "CHF"),
         ("1.1", "Haupterwerb Person 1 & 2", "170'000"),
         ("4.1", "Wertschriftenertrag (Form 340)", "450"),
-        ("7", "Total der Einkünfte", str(einkunfte)),
-        ("18", "Total der Abzüge (Detail)", str(z18_total)),
-        ("21", "Nettoeinkommen", str(z21_netto)),
-        ("22.1", "Krankheits- und Unfallkosten", str(z22_1)),
-        ("22.2", "Gemeinnützige Zuwendungen (Spenden)", str(z22_2)),
-        ("23", "Reineinkommen", str(z23_rein)),
+        ("7", "Total der Einkünfte", "170'450"),
+        ("11.1/2", "Berufsauslagen P1 + P2", "-6'400"),
+        ("12", "Schuldzinsen (Privatkredit)", "-150"),
+        ("14.1/2", "Säule 3a (P1 + P2)", "-14'516"),
+        ("15", "Versicherungsprämien / Krankenkasse", "-5'800"),
+        ("16.2", "Weiterbildungskosten", "-500"),
+        ("16.3", "Wertschriftenverwaltung", "-150"),
+        ("16.6", "Fremdbetreuung Kinder (Kita Noah)", "-12'000"),
+        ("17", "Sonderabzug Erwerbstätigkeit", "-6'100"),
+        ("18", "Total der Abzüge", "-45'616"),
+        ("21", "Nettoeinkommen", "124'834"),
+        ("22.1", "Krankheits- und Unfallkosten", "-1'200"),
+        ("22.2", "Gemeinnützige Zuwendungen (Spenden)", "-500"),
+        ("23", "Reineinkommen", "123'134"),
         ("24.1", "Kinderabzug Noah (Kanton: 9'300 / Bund: 6'800)", "9'300 / 6'800"),
-        ("24.3", "Ehegattenabzug (Nur Bund)", "2'800"),
-        ("25", "STEUERBARES EINKOMMEN (Kanton Zürich)", str(z25_kanton)),
-        ("25", "STEUERBARES EINKOMMEN (Direkte Bundessteuer)", str(z25_bund)),
-        ("33", "Total der Vermögenswerte", "57'500"),
+        ("24.3", "Ehegattenabzug (Nur Bundessteuer)", "2'800"),
+        ("25", "STEUERBARES EINKOMMEN (Kanton Zürich)", "113'834"),
+        ("25", "STEUERBARES EINKOMMEN (Direkte Bundessteuer)", "113'534"),
+        ("33", "Total der Vermögenswerte (Form 340)", "57'500"),
         ("34", "Schulden (Form 355 - Privatkredit)", "-5'000"),
         ("35", "STEUERBARES VERMÖGEN", "52'500")
     ]
     
-    y = 750
+    y = 785
     c.setFont("Helvetica-Bold", 8)
     c.drawString(50, y, main_data[0][0]); c.drawString(120, y, main_data[0][1]); c.drawString(420, y, main_data[0][2])
-    y -= 18
+    y -= 15
     c.setFont("Helvetica", 8)
     for row in main_data[1:]:
         c.drawString(50, y, row[0]); c.drawString(120, y, row[1]); c.drawString(420, y, row[2])
-        y -= 15
+        y -= 13
         
-    # --- SAYFA 2: EK FORMLAR VE DETAYLAR ---
+    # --- SAYFA 2: EK AÇIKLAMALAR VE KONTROL LİSTESİ ---
     c.showPage()
     c.setFont("Helvetica-Bold", 13)
-    c.drawString(50, 800, "DETAILANALYSE UND BEILAGEN ZUR STEUERERKLÄRUNG")
+    c.drawString(50, 800, "ZUSÄTZLICHE HINWEISE ZUR STEUERERKLÄRUNG")
     
     c.setFont("Helvetica-Bold", 10)
-    c.drawString(50, 760, "1. Abzüge Detail (Ziff. 18 Total: 45'616 CHF)")
+    c.drawString(50, 760, "1. Form 340 (Wertschriftenverzeichnis)")
     c.setFont("Helvetica", 8)
-    c.drawString(50, 742, "• Berufsauslagen P1+P2 (Ziff. 11.1/2): 6'400 CHF")
-    c.drawString(50, 728, "• Schuldzinsen Privatkredit (Ziff. 12): 150 CHF")
-    c.drawString(50, 714, "• Säule 3a P1+P2 (Ziff. 14.1/2): 14'516 CHF")
-    c.drawString(50, 700, "• Versicherungsprämien (Ziff. 15): 5'800 CHF")
-    c.drawString(50, 686, "• Weiterbildung (Ziff. 16.2) & Depotgebühr (Ziff. 16.3): 650 CHF")
-    c.drawString(50, 672, "• Kita / Fremdbetreuung (Ziff. 16.6): 12'000 CHF")
-    c.drawString(50, 658, "• Sonderabzug Erwerbstätigkeit (Ziff. 17): 6'100 CHF")
+    c.drawString(50, 742, "• ZKB Bankguthaben & Aktien/Fonds Total Vergi Değeri: 57'500 CHF (Ziff. 33)")
+    c.drawString(50, 728, "• Elde Edilen Brüt Faiz ve Temettü Geliri: 450 CHF (Ziff. 4.1)")
     
     c.setFont("Helvetica-Bold", 10)
-    c.drawString(50, 620, "2. Wertschriften (Form 340) & Schulden (Form 355)")
+    c.drawString(50, 690, "2. Form 355 (Schuldenverzeichnis)")
     c.setFont("Helvetica", 8)
-    c.drawString(50, 602, "• ZKB Konto & Aktien (Vergi Değeri): 57'500 CHF -> Ziff. 33")
-    c.drawString(50, 588, "• Privatkredit Restschuld (Vergi Değeri): -5'000 CHF -> Ziff. 34")
+    c.drawString(50, 672, "• Privatkredit Restschuld per 31.12.2025: 5'000 CHF (Ziff. 34)")
+    c.drawString(50, 658, "• Yıllık Ödenen Faiz Miktarı: 150 CHF (Ziff. 12)")
 
     c.save()
     return file_path
@@ -95,14 +76,14 @@ def send_email():
     msg = MIMEMultipart()
     msg['From'] = os.environ.get("MY_EMAIL")
     msg['To'] = os.environ.get("MY_EMAIL")
-    msg['Subject'] = "OFFIZIELLE STEUERERKLÄRUNG 2025 - KANTON & BUND SEperat"
-    msg.attach(MIMEText("Zürih 2025 Form 300, Kanton/Bund Ziffer 25 ayrımları ve ek formlar dahil güncel paket ektedir.", 'plain', 'utf-8'))
+    msg['Subject'] = "OFFIZIELLE STEUERERKLÄRUNG 2025 - KOMPLETT & UNGEKÜRZT"
+    msg.attach(MIMEText("Zürih 2025 Form 300 hiçbir kalem eksiltilmeden ve Kanton/Bund ayrımıyla ekte sunulmuştur.", 'plain', 'utf-8'))
     
     with open(file_path, "rb") as f:
         part = MIMEBase("application", "pdf")
         part.set_payload(f.read())
         encoders.encode_base64(part)
-        part.add_header("Content-Disposition", "attachment", filename="Steuererklaerung_2025_Kanton_Bund.pdf")
+        part.add_header("Content-Disposition", "attachment", filename="Steuererklaerung_2025_Eksiksiz.pdf")
         msg.attach(part)
 
     server = smtplib.SMTP('smtp.gmail.com', 587)
