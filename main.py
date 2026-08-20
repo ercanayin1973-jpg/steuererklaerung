@@ -45,8 +45,7 @@ def create_pdf_report(report_text, filename="tax_report.pdf"):
     return filename
 
 def process_tax_documents():
-    # Buradan müşterinin durumunu "Verheiratet" (Evli) veya "Ledig" (Bekar) olarak değiştirebilirsin
-    medeni_durum = "Verheiratet"  
+    medeni_durum = "Verheiratet"  # "Verheiratet" (Evli) veya "Ledig" (Bekar)
     
     raw_expenses = """
     - Yol/Ulasim Masrafi (Berufsauslagen): 1'500 CHF
@@ -56,7 +55,6 @@ def process_tax_documents():
     
     client = genai.Client(api_key=GEMINI_API_KEY)
     
-    # Koşullu (OR) Mantık
     if medeni_durum == "Verheiratet":
         tarif_aciklamasi = "Musteri EVLI bir cifttir. Isvicre evli ciftler ortak vergi tarifesine (Verheiratetentarif) gore hesapla."
     else:
@@ -72,8 +70,9 @@ def process_tax_documents():
     {raw_expenses}
     """
     
+    # En stabil çalışan güncel model
     response = client.models.generate_content(
-        model='gemini-3.7-flash',
+        model='gemini-2.0-flash',
         contents=prompt,
     )
     return response.text, medeni_durum
