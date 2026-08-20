@@ -4,11 +4,13 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from google import genai
 
+# 1. Bilgileri alıyoruz
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 MY_EMAIL = os.environ.get("MY_EMAIL")
 EMAIL_PASSWORD = os.environ.get("EMAIL_PASSWORD")
 
 def process_tax_documents():
+    # Müşterinin yıl boyunca topladığı dağınık harcamalar
     raw_expenses = """
     - 15.03.2026: Zürih Tren İstasyonu yıllık abonelik (Berufsauslagen / Yol) - 1'200 CHF
     - 10.05.2026: Dişçi kontrol ve tedavi faturası (Krankheitskosten) - 450 CHF
@@ -16,20 +18,21 @@ def process_tax_documents():
     - 12.11.2026: Mesleki Almanca kursu faturası (Weiterbildung) - 800 CHF
     """
     
+    # Gemini'yi yeni kütüphane standardına göre başlatıyoruz
     client = genai.Client(api_key=GEMINI_API_KEY)
     
     prompt = f"""
     Sen İsviçre vergi mevzuatına (Steuererklärung) hakim profesyonel bir dijital vergi asistanısın.
     Aşağıda bir müşterinin yıl boyunca topladığı dağınık harcama listesi bulunmaktadır.
-    Bu harcamaları İsviçre vergi dairesinin standart kategorilerine göre ayır.
-    Müşterinin vergi beyannamesine doğrudan yazabileceği, net ve düzenli bir vergi özet raporu hazırla.
+    Bu harcamaları İsviçre vergi dairesinin standart kategorilerine göre (Örn: Berufsauslagen, Krankheitskosten, Spenden, Weiterbildung) ayır.
+    Müşterinin vergi beyannamesine doğrudan yazabileceği, net, anlaşılır ve düzenli bir vergi özet raporu hazırla.
 
     Dağınık Harcama Listesi:
     {raw_expenses}
     """
     
     response = client.models.generate_content(
-        model='gemini-1.5-flash',
+        model='gemini-2.5-flash',
         contents=prompt,
     )
     return response.text
@@ -48,6 +51,9 @@ def send_tax_report(report_content):
     İsviçre Vergi Asistanı - Otomatik Sınıflandırma Raporu
     --------------------------------------------------
     {report_content}
+    
+    --------------------------------------------------
+    Bu rapor sistem tarafından otomatik olarak oluşturulmuştur.
     """
     msg.attach(MIMEText(body, 'plain', 'utf-8'))
 
