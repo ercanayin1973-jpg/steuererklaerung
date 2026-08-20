@@ -7,29 +7,34 @@ from email import encoders
 import os
 
 def create_official_pdf():
-    file_path = "Steuererklaerung_2025_Zuerich_Offiziell.pdf"
+    file_path = "Steuererklaerung_2025_Zuerich_Final.pdf"
     c = canvas.Canvas(file_path, pagesize=A4)
-    c.setFont("Helvetica-Bold", 14)
-    c.drawString(50, 820, "STEUERERKLÄRUNG 2025 - KANTON ZÜRICH")
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(50, 820, "STEUERERKLÄRUNG 2025 - KANTON ZÜRICH (FORM 300)")
     
-    # Resmi Ziffer Yapısı
+    # Hesaplama Mantığı (Ziffer Zinciri)
+    # Gelirler
+    z7_total_einkunfte = 170450
+    # İndirimler
+    z18_total_abzuge = 44816
+    z21_netto = z7_total_einkunfte - z18_total_abzuge
+    z23_rein = z21_netto - 1700 # Krankheits + Spenden
+    z25_steuerbar_eink = z23_rein - 9300 - 2800 # Çocuk + Eş indirimi
+    
     data = [
-        ("Ziffer", "Beschreibung", "Betrag (CHF)"),
-        ("1.1", "Haupterwerb Person 1", "125'000"),
-        ("1.1", "Haupterwerb Person 2", "45'000"),
-        ("11.1", "Berufsauslagen Person 1", "-3'200"),
-        ("11.2", "Berufsauslagen Person 2", "-3'200"),
-        ("14.1", "Säule 3a Person 1", "-7'258"),
-        ("14.2", "Säule 3a Person 2", "-7'258"),
-        ("15", "Versicherungsprämien (Krankenkasse)", "-5'800"),
-        ("16.6", "Fremdbetreuung Kinder (Kita)", "-12'000"),
-        ("17", "Sonderabzug Erwerbstätigkeit", "6'100"),
-        ("22.1", "Krankheits- und Unfallkosten", "-1'200"),
-        ("22.2", "Gemeinnützige Zuwendungen", "-500"),
-        ("24.1", "Kinderabzug (Staatssteuer)", "-9'300"),
-        ("30.1", "Bankguthaben & Wertschriften", "57'500"),
+        ("Ziff.", "Beschreibung", "CHF"),
+        ("1.1", "Haupterwerb Person 1+2", "170'000"),
+        ("4.1", "Wertschriftenertrag", "450"),
+        ("7", "Total der Einkünfte", str(z7_total_einkunfte)),
+        ("18", "Total der Abzüge", str(z18_total_abzuge)),
+        ("21", "Nettoeinkommen", str(z21_netto)),
+        ("23", "Reineinkommen", str(z23_rein)),
+        ("24.1", "Kinderabzug (Noah)", "9'300"),
+        ("24.3", "Ehegattenabzug (Bund)", "2'800"),
+        ("25", "Steuerbares Einkommen", str(z25_steuerbar_eink)),
+        ("33", "Total Vermögenswerte", "57'500"),
         ("34", "Schulden (Privatkredit)", "-5'000"),
-        ("35", "STEUERBARES VERMÖGEN GESAMT", "52'500")
+        ("35", "Steuerbares Vermögen", "52'500")
     ]
     
     y = 770
@@ -43,6 +48,7 @@ def create_official_pdf():
     c.save()
     return file_path
 
+# send_email fonksiyonu aynı kalıyor...
 def send_email():
     file_path = create_official_pdf()
     msg = MIMEMultipart()
@@ -54,9 +60,9 @@ def send_email():
         part = MIMEBase("application", "pdf")
         part.set_payload(f.read())
         encoders.encode_base64(part)
-        part.add_header("Content-Disposition", "attachment", filename="Steuererklaerung_2025_Offiziell.pdf")
+        part.add_header("Content-Disposition", "attachment", filename="Steuererklaerung_2025.pdf")
         msg.attach(part)
-
+    
     server = smtplib.SMTP('smtp.gmail.com', 587)
     server.starttls()
     server.login(os.environ.get("MY_EMAIL"), os.environ.get("EMAIL_PASSWORD"))
